@@ -1,0 +1,73 @@
+ConcatStringTree ConcatStringTree::subString(int from, int to) const
+{
+    if (from < 0 || from >= this->length() || to < 0 || to >= this->length() + 1)
+    {
+        throw out_of_range("Index of string is invalid!");
+    }
+    if (from >= to)
+    {
+        throw logic_error("Invalid range!");
+    }
+    union S
+    {
+        ConcatStringTree newTree;
+        S()
+        {
+            newTree = ConcatStringTree();
+        }
+        ~S()
+        {
+
+        }
+    } s;
+    s.newTree.root = cloneConcatStringTree(this->root);
+    ConcatStringNode* prev_tempFrom = nullptr, * prev_tempTo = nullptr;
+    ConcatStringNode* tempFrom = s.newTree.root;
+    int x = from, y = to, str_len = y - x;
+    while (tempFrom->leftLength != 0)
+    {
+        if (from < tempFrom->leftLength)
+        {
+            prev_tempFrom = tempFrom;
+            tempFrom = tempFrom->left;
+        }
+        else
+        {
+            from -= tempFrom->leftLength;
+            prev_tempFrom = tempFrom;
+            tempFrom = tempFrom->right;
+            s.newTree.cleanUp(&prev_tempFrom->left);
+        }
+    }
+    ConcatStringNode* tempTo = s.newTree.root;
+    while (tempTo->leftLength != 0)
+    {
+        if (to <= tempTo->leftLength)
+        {
+            prev_tempTo = tempTo;
+            tempTo = tempTo->left;
+            s.newTree.cleanUp(&prev_tempTo->right);
+        }
+        else
+        {
+            to -= tempTo->leftLength;
+            prev_tempTo = tempTo;
+            tempTo = tempTo->right;
+        }
+    }
+    if (prev_tempTo == nullptr || prev_tempFrom == nullptr)
+    {
+        tempFrom->s = tempFrom->s.substr(from, str_len);
+    }
+    else
+    {
+        tempFrom->s = tempFrom->s.substr(from, min(str_len, tempFrom->realLength - from));
+        tempFrom->realLength = (int)tempFrom->s.length();
+        int index = (tempFrom == tempTo ? from : 0);
+        tempTo->s = tempTo->s.substr(index, min((str_len, tempTo->realLength - index), to - index));
+        tempTo->realLength = (int)tempTo->s.length();
+    }
+    s.newTree.update();
+    s.newTree.AVLInsertPreOrder();
+    return s.newTree;
+}
